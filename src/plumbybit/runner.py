@@ -1,41 +1,30 @@
-"""Orquestrador: arranca todos os agents ativos em paralelo."""
+"""Entrypoint CLI: corre os agents sem web UI (`python -m plumbybit`).
+
+A config vem do ConfigStore (SQLite), semeado a partir do agents.yaml no
+primeiro arranque. Para editar em runtime, usa o web UI (`plumbybit-web`).
+"""
 from __future__ import annotations
 
 import asyncio
 import signal
 
-from .agent import Agent
-from .brain import Brain
-from .config import Settings, load_agents
 from .logging_conf import configure, get_logger
-from .state import Store
+from .supervisor import Supervisor
 
 log = get_logger(__name__)
 
 
 async def main() -> None:
-    settings = Settings()  # type: ignore[call-arg]
-    configure(settings.log_level)
+    sup = Supervisor()
+    configure(sup.settings.log_level)
 
-    agents_cfg = [a for a in load_agents(settings.agents_config) if a.enabled]
-    if not agents_cfg:
-        log.warning("nenhum agent ativo em %s", settings.agents_config)
-        return
+    st = sup.runtime
+    log.info("runner.start", dry_run=st.dry_run, real_armed=st.real_trading_armed(),
+             agents=[a["name"] for a in sup.status() if a["enabled"]])
 
-    real = [a.name for a in agents_cfg if a.account == "real"]
-    brains = {a.name: settings.resolve_llm(a) for a in agents_cfg}
-    log.info("runner.start",
-             agents=[a.name for a in agents_cfg],
-             dry_run=settings.dry_run,
-             real_armed=settings.real_trading_armed(),
-             real_agents=real,
-             brains={n: f"{p}:{m}" for n, (p, m) in brains.items()})
-    if real and not settings.real_trading_armed():
-        log.warning("agents reais em modo simulado (PLUMBYBIT_ALLOW_REAL / PLUMBYBIT_DRY_RUN)", agents=real)
-
-    store = Store(settings.state_db)
-    brain = Brain(settings)
-    tasks = [asyncio.create_task(Agent(c, settings, store, brain).run(), name=c.name) for c in agents_cfg]
+    await sup.start()
+    if not sup._tasks:
+        log.warning("nenhum agent ativo - edita a config pelo web UI ou pelo agents.yaml")
 
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
@@ -46,11 +35,12 @@ async def main() -> None:
             pass
 
     await stop.wait()
-    log.info("runner.stopping")
-    for t in tasks:
-        t.cancel()
-    await asyncio.gather(*tasks, return_exceptions=True)
+    await sup.stop()
+
+
+def cli() -> None:
+    asyncio.run(main())
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    cli()

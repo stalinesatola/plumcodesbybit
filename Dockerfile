@@ -17,4 +17,7 @@ RUN pip install --no-cache-dir -e .
 RUN useradd --create-home --uid 10001 bot && mkdir -p /app/data && chown -R bot /app
 USER bot
 
-CMD ["python", "-m", "plumbybit"]
+EXPOSE 8080
+# web UI + supervisor dos agents num so processo.
+# Para correr sem web (so agents): CMD ["python", "-m", "plumbybit"]
+CMD ["python", "-m", "plumbybit.web.app"]
