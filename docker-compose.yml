@@ -1,0 +1,21 @@
+services:
+  agents:
+    build: .
+    image: plumcodesbybit:latest
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./config:/app/config:ro
+      - ./data:/app/data
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sqlite3,os,sys; p=os.getenv('PLUMBYBIT_STATE_DB','data/plumbybit.db'); sys.exit(0 if os.path.exists(p) else 1)"]
+      interval: 2m
+      timeout: 10s
+      retries: 3
+      start_period: 3m

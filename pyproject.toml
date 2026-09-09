@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "plumbybit"
+version = "0.1.0"
+description = "Agents de trade LLM (Claude) para Bybit - contas demo e real"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=1.0.0",
+    "pybit>=5.11.0",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "PyYAML>=6.0",
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "tenacity>=8.3",
+    "python-dotenv>=1.0",
+    "structlog>=24.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.5", "mypy>=1.10"]
+
+[project.scripts]
+plumbybit = "plumbybit.runner:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/plumbybit"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+ignore = ["C408"]  # dict(...) calls sao legiveis aqui
