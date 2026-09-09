@@ -33,6 +33,14 @@ agents:
     enabled: true
     max_position_usdt: 50
 
+  # Mesmo simbolo, cerebro diferente - util para comparar providers lado a lado.
+  - name: btc-demo-nvidia
+    account: demo
+    symbol: BTCUSDT
+    enabled: false
+    provider: nvidia
+    model: meta/llama-3.3-70b-instruct
+
   # Agent em conta REAL - so opera se PLUMBYBIT_ALLOW_REAL=true e
   # PLUMBYBIT_DRY_RUN=false. Mantem tamanhos pequenos.
   - name: btc-real

@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 Account = Literal["demo", "real"]
+Provider = Literal["anthropic", "nvidia"]
 
 
 class Settings(BaseSettings):
@@ -16,8 +17,16 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    anthropic_api_key: str = Field(alias="ANTHROPIC_API_KEY")
+    # --- cerebro / LLM ---
+    llm_provider: Provider = Field("anthropic", alias="PLUMBYBIT_LLM_PROVIDER")
+
+    anthropic_api_key: str = Field("", alias="ANTHROPIC_API_KEY")
     llm_model: str = Field("claude-sonnet-5", alias="PLUMBYBIT_LLM_MODEL")
+
+    # NVIDIA API (integrate.api.nvidia.com) - compativel com OpenAI
+    nvidia_api_key: str = Field("", alias="NVIDIA_API_KEY")
+    nvidia_model: str = Field("meta/llama-3.3-70b-instruct", alias="PLUMBYBIT_NVIDIA_MODEL")
+    nvidia_base_url: str = Field("https://integrate.api.nvidia.com/v1", alias="PLUMBYBIT_NVIDIA_BASE_URL")
 
     bybit_demo_api_key: str = Field("", alias="BYBIT_DEMO_API_KEY")
     bybit_demo_api_secret: str = Field("", alias="BYBIT_DEMO_API_SECRET")
@@ -41,6 +50,13 @@ class Settings(BaseSettings):
         """So True se explicitamente autorizado e fora de dry-run."""
         return self.allow_real and not self.dry_run
 
+    def resolve_llm(self, agent: AgentConfig) -> tuple[Provider, str]:
+        """Provider + modelo efetivos para um agent (override do agent > global)."""
+        provider: Provider = agent.provider or self.llm_provider
+        if agent.model:
+            return provider, agent.model
+        return provider, (self.nvidia_model if provider == "nvidia" else self.llm_model)
+
 
 class AgentConfig(BaseModel):
     name: str
@@ -56,6 +72,9 @@ class AgentConfig(BaseModel):
     take_profit_pct: float = 1.5
     stop_loss_pct: float = 1.0
     candles_lookback: int = 200
+    # override opcional do cerebro para este agent
+    provider: Provider | None = None
+    model: str | None = None
 
 
 def load_agents(path: str | Path) -> list[AgentConfig]:

@@ -28,6 +28,7 @@ def main() -> int:
             ok = False
             print(f"[{account}] FALHOU: {exc}")
 
+    agents = []
     try:
         agents = load_agents(s.agents_config)
         print(f"[config] {len(agents)} agents: {[a.name for a in agents]}")
@@ -36,7 +37,17 @@ def main() -> int:
         print(f"[config] FALHOU: {exc}")
 
     print(f"[flags] dry_run={s.dry_run} allow_real={s.allow_real} real_armed={s.real_trading_armed()}")
-    print(f"[anthropic] key {'definida' if s.anthropic_api_key else 'EM FALTA'}, modelo={s.llm_model}")
+    print(f"[llm] provider default={s.llm_provider}")
+    print(f"[llm] anthropic key {'ok' if s.anthropic_api_key else 'em falta'}, modelo={s.llm_model}")
+    print(f"[llm] nvidia key {'ok' if s.nvidia_api_key else 'em falta'}, modelo={s.nvidia_model}, url={s.nvidia_base_url}")
+
+    providers_usados = {a.provider or s.llm_provider for a in agents}
+    if "nvidia" in providers_usados and not s.nvidia_api_key:
+        ok = False
+        print("[llm] FALHOU: ha agents com provider 'nvidia' mas NVIDIA_API_KEY nao esta definida")
+    if "anthropic" in providers_usados and not s.anthropic_api_key:
+        ok = False
+        print("[llm] FALHOU: ha agents com provider 'anthropic' mas ANTHROPIC_API_KEY nao esta definida")
     return 0 if ok else 1
 
 

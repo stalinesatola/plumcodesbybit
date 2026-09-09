@@ -1,10 +1,20 @@
 # plumcodesbybit
 
 Agents de trade autónomos para a **Bybit** (perpétuos USDT), 24/7.
-O "cérebro" de cada agent é o **Claude** (Anthropic API): recebe um snapshot de
-mercado + a posição atual e devolve uma decisão estruturada (`open_long`,
-`open_short`, `close`, `hold`). A execução, o dimensionamento e os limites de
-risco são **determinísticos** e vivem fora do LLM.
+O "cérebro" de cada agent é um **LLM** que recebe um snapshot de mercado + a
+posição atual e devolve uma decisão estruturada (`open_long`, `open_short`,
+`close`, `hold`). A execução, o dimensionamento e os limites de risco são
+**determinísticos** e vivem fora do LLM.
+
+Providers de LLM (configuráveis global ou por agent):
+
+| `provider` | Endpoint | Chave |
+|-----------|----------|-------|
+| `anthropic` (default) | Claude / Anthropic API | `ANTHROPIC_API_KEY` |
+| `nvidia` | `integrate.api.nvidia.com` (compatível com OpenAI) | `NVIDIA_API_KEY` de <https://build.nvidia.com> |
+
+Podes correr o **mesmo símbolo com providers diferentes** em paralelo para os
+comparar (ver `btc-demo-nvidia` no `agents.example.yaml`).
 
 Suporta em simultâneo:
 
@@ -23,7 +33,7 @@ Suporta em simultâneo:
 runner  ──►  Agent (1 por símbolo/conta, loop assíncrono)
                 │
                 ├─ market_data  →  klines + ticker + indicadores  (exchange/pybit)
-                ├─ brain        →  Claude decide (structured output)
+                ├─ brain        →  LLM decide (anthropic | nvidia), saida JSON validada
                 ├─ risk         →  guardrails: confiança mín., 1 posição, kill-switch perda diária
                 └─ trader       →  ordem de mercado + TP/SL   (dry-run por omissão)
               state (SQLite)    →  log de decisões + PnL diário
@@ -82,7 +92,7 @@ docker compose logs -f
 `config/agents.yaml` — `defaults:` aplica-se a todos; cada entrada em `agents:`
 pode sobrepor qualquer campo. Campos principais: `symbol`, `account`,
 `interval`, `poll_seconds`, `leverage`, `max_position_usdt`,
-`take_profit_pct`, `stop_loss_pct`, `enabled`.
+`take_profit_pct`, `stop_loss_pct`, `enabled`, `provider`, `model`.
 
 ## Testes
 

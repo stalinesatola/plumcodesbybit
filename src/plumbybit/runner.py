@@ -23,11 +23,13 @@ async def main() -> None:
         return
 
     real = [a.name for a in agents_cfg if a.account == "real"]
+    brains = {a.name: settings.resolve_llm(a) for a in agents_cfg}
     log.info("runner.start",
              agents=[a.name for a in agents_cfg],
              dry_run=settings.dry_run,
              real_armed=settings.real_trading_armed(),
-             real_agents=real)
+             real_agents=real,
+             brains={n: f"{p}:{m}" for n, (p, m) in brains.items()})
     if real and not settings.real_trading_armed():
         log.warning("agents reais em modo simulado (PLUMBYBIT_ALLOW_REAL / PLUMBYBIT_DRY_RUN)", agents=real)
 

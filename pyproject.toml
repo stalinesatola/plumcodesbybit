@@ -9,6 +9,7 @@ description = "Agents de trade LLM (Claude) para Bybit - contas demo e real"
 requires-python = ">=3.11"
 dependencies = [
     "anthropic>=1.0.0",
+    "openai>=1.40.0",
     "pybit>=5.11.0",
     "pydantic>=2.7",
     "pydantic-settings>=2.3",
