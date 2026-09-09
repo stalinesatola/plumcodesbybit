@@ -30,13 +30,13 @@ Suporta em simultâneo:
 ## Arquitetura
 
 ```
-runner  ──►  Agent (1 por símbolo/conta, loop assíncrono)
-                │
-                ├─ market_data  →  klines + ticker + indicadores  (exchange/pybit)
-                ├─ brain        →  LLM decide (anthropic | nvidia), saida JSON validada
-                ├─ risk         →  guardrails: confiança mín., 1 posição, kill-switch perda diária
-                └─ trader       →  ordem de mercado + TP/SL   (dry-run por omissão)
-              state (SQLite)    →  log de decisões + PnL diário
+web UI (FastAPI)  ──►  Supervisor  ──►  Agent (1 por símbolo/conta, loop assíncrono)
+      │                      │              │
+   configstore (SQLite)   RuntimeConfig     ├─ market_data → klines+ticker+indicadores (pybit)
+   agents + flags globais  (flags live)     ├─ brain      → LLM decide (anthropic|nvidia), JSON validado
+                                            ├─ risk       → guardrails: confiança mín., 1 posição, kill-switch
+                                            └─ trader     → ordem de mercado + TP/SL  (dry-run por omissão)
+                                          state (SQLite)  → log de decisões + PnL diário
 ```
 
 ## Setup
@@ -74,17 +74,37 @@ python -m scripts.check_connection
 
 ## Correr
 
-Local:
+### Web UI (recomendado) — painel totalmente configurável
+
+```bash
+plumbybit-web            # ou: python -m plumbybit.web.app
+```
+
+Abre `http://127.0.0.1:8080`. O painel permite, **em runtime e sem reiniciar**:
+
+- ligar/desligar `dry_run` e `allow_real`, ajustar `max_daily_loss_usdt`
+- escolher provider/modelo de LLM (global) — reinicia os agents automaticamente
+- CRUD de agents (símbolo, conta, timeframe, leverage, TP/SL, provider/modelo…)
+- start/stop de cada agent
+- ver posições abertas (live), decisões, PnL diário e logs
+
+A config passa a viver em SQLite (`data/plumbybit.db`), semeada a partir do
+`config/agents.yaml` no primeiro arranque. Segredos (API keys) **só** no `.env`.
+
+Autenticação: define `PLUMBYBIT_WEB_PASSWORD` (e `PLUMBYBIT_WEB_SECRET`). Sem
+password o painel fica aberto — usa só em localhost.
+
+### Só os agents (sem web)
 
 ```bash
 python -m plumbybit
 ```
 
-Docker (24/7):
+### Docker (24/7)
 
 ```bash
 docker compose up -d --build
-docker compose logs -f
+docker compose logs -f          # painel em http://127.0.0.1:8080
 ```
 
 ## Configurar agents

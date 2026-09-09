@@ -4,6 +4,12 @@ services:
     image: plumcodesbybit:latest
     restart: unless-stopped
     env_file: .env
+    ports:
+      # web UI - por omissao so no host (127.0.0.1). Poe atras de um reverse
+      # proxy com TLS se o quiseres expor.
+      - "127.0.0.1:8080:8080"
+    environment:
+      PLUMBYBIT_WEB_HOST: "0.0.0.0"
     volumes:
       - ./config:/app/config:ro
       - ./data:/app/data

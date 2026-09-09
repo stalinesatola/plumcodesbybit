@@ -1,0 +1,53 @@
+# ==========================================================================
+# Definicao dos agents de trade. Copia para config/agents.yaml e ajusta.
+# Cada agent corre no seu proprio loop assincrono, 24/7.
+# ==========================================================================
+
+defaults:
+  category: linear          # linear = perpetuos USDT
+  interval: "15"            # timeframe das velas (1,3,5,15,30,60,240,D)
+  poll_seconds: 180         # frequencia de avaliacao do agent
+  leverage: 3
+  max_position_usdt: 100    # notional maximo por posicao
+  max_open_positions: 1     # posicoes simultaneas por agent
+  take_profit_pct: 1.5      # % alvo (a partir do preco de entrada)
+  stop_loss_pct: 1.0        # % stop
+  candles_lookback: 200
+
+agents:
+  - name: btc-demo
+    account: demo            # demo | real
+    symbol: BTCUSDT
+    enabled: true
+
+  - name: eth-demo
+    account: demo
+    symbol: ETHUSDT
+    enabled: true
+    interval: "5"
+    poll_seconds: 120
+
+  - name: sol-demo
+    account: demo
+    symbol: SOLUSDT
+    enabled: true
+    max_position_usdt: 50
+
+  # Mesmo simbolo, cerebro diferente - util para comparar providers lado a lado.
+  - name: btc-demo-nvidia
+    account: demo
+    symbol: BTCUSDT
+    enabled: false
+    provider: nvidia
+    model: meta/llama-3.3-70b-instruct
+
+  # Agent em conta REAL - so opera se PLUMBYBIT_ALLOW_REAL=true e
+  # PLUMBYBIT_DRY_RUN=false. Mantem tamanhos pequenos.
+  - name: btc-real
+    account: real
+    symbol: BTCUSDT
+    enabled: false
+    leverage: 2
+    max_position_usdt: 30
+    take_profit_pct: 1.0
+    stop_loss_pct: 0.7

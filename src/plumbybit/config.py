@@ -41,6 +41,13 @@ class Settings(BaseSettings):
     log_level: str = Field("INFO", alias="PLUMBYBIT_LOG_LEVEL")
     state_db: str = Field("data/plumbybit.db", alias="PLUMBYBIT_STATE_DB")
 
+    # --- web UI ---
+    web_host: str = Field("127.0.0.1", alias="PLUMBYBIT_WEB_HOST")
+    web_port: int = Field(8080, alias="PLUMBYBIT_WEB_PORT")
+    web_password: str = Field("", alias="PLUMBYBIT_WEB_PASSWORD")
+    web_secret: str = Field("", alias="PLUMBYBIT_WEB_SECRET")
+    web_session_hours: int = Field(12, alias="PLUMBYBIT_WEB_SESSION_HOURS")
+
     def credentials(self, account: Account) -> tuple[str, str]:
         if account == "demo":
             return self.bybit_demo_api_key, self.bybit_demo_api_secret
